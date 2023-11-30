@@ -1,11 +1,11 @@
 <?php
 
-namespace app\models;
+namespace backend\models;
 
-use Yii;
+use yii\db\ActiveQuery;
+use yii\helpers\ArrayHelper;
 
 /**
- * This is the model class for table "book".
  *
  * @property int $id
  * @property string $name
@@ -15,65 +15,68 @@ use Yii;
  * @property string|null $photo
  * @property int $count
  *
- * @property AuthorBook[] $authorBooks
+ * @property array $authorBooks
+ * @property array authorDropdown
  * @property Subscriber[] $subscribers
  */
 class Book extends \yii\db\ActiveRecord
 {
-    /**
-     * {@inheritdoc}
-     */
-    public static function tableName()
+    public static function tableName(): string
     {
         return 'book';
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function rules()
+    public function rules(): array
     {
         return [
             [['name', 'year', 'isbn'], 'required'],
             [['year', 'count'], 'integer'],
             [['description'], 'string'],
             [['name', 'isbn', 'photo'], 'string', 'max' => 255],
+            [['authorBooks'], 'safe']
         ];
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function attributeLabels()
+    public function attributeLabels(): array
     {
         return [
             'id' => 'ID',
-            'name' => 'Name',
-            'year' => 'Year',
-            'description' => 'Description',
+            'name' => 'Название',
+            'year' => 'Год',
+            'description' => 'Описание',
             'isbn' => 'Isbn',
-            'photo' => 'Photo',
-            'count' => 'Count',
+            'photo' => 'Фото',
+            'count' => 'Количество',
+            'authorBooks' => 'Авторы'
         ];
     }
 
-    /**
-     * Gets query for [[AuthorBooks]].
-     *
-     * @return \yii\db\ActiveQuery
-     */
-    public function getAuthorBooks()
+    public function getAuthorBooks(): array
     {
-        return $this->hasMany(AuthorBook::class, ['book_id' => 'id']);
+        return $this->hasMany(AuthorBook::class, ['book_id' => 'id'])->select('author_id')->column();
     }
 
-    /**
-     * Gets query for [[Subscribers]].
-     *
-     * @return \yii\db\ActiveQuery
-     */
-    public function getSubscribers()
+    public function setAuthorBooks($authorsIds)
+    {
+        $this->authorBooks = $authorsIds;
+    }
+
+    public function getSubscribers(): ActiveQuery
     {
         return $this->hasMany(Subscriber::class, ['book_id' => 'id']);
+    }
+
+    public function afterSave($insert, $changedAttributes)
+    {
+        if ($this->authorBooks){
+            AuthorBook::deleteAll(['book_id' => $this->id]);
+            foreach ($this->authorBooks as $authorId) {
+                $authorLink = new AuthorBook();
+                $authorLink->book_id = $this->id;
+                $authorLink->author_id = $authorId;
+                $authorLink->save();
+            }
+        };
+        parent::afterSave($insert, $changedAttributes);
     }
 }
