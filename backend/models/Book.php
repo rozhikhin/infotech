@@ -2,8 +2,11 @@
 
 namespace backend\models;
 
+use backend\FileServices;
 use yii\db\ActiveQuery;
 use yii\helpers\ArrayHelper;
+use yii\web\HttpException;
+use yii\web\UploadedFile;
 
 /**
  *
@@ -21,6 +24,8 @@ use yii\helpers\ArrayHelper;
  */
 class Book extends \yii\db\ActiveRecord
 {
+    public $imageFile;
+
     public static function tableName(): string
     {
         return 'book';
@@ -29,11 +34,12 @@ class Book extends \yii\db\ActiveRecord
     public function rules(): array
     {
         return [
-            [['name', 'year', 'isbn'], 'required'],
+            [['name', 'year', 'isbn'], 'required', 'message'=>'Поле {attribute} не может быть пустым.'],
             [['year', 'count'], 'integer'],
             [['description'], 'string'],
-            [['name', 'isbn', 'photo'], 'string', 'max' => 255],
-            [['authorBooks'], 'safe']
+            [['name', 'isbn'], 'string', 'max' => 255],
+            [['authorBooks'], 'safe'],
+            [['imageFile'], 'file',  'extensions' => 'png, jpg, jpeg']
         ];
     }
 
@@ -47,7 +53,8 @@ class Book extends \yii\db\ActiveRecord
             'isbn' => 'Isbn',
             'photo' => 'Фото',
             'count' => 'Количество',
-            'authorBooks' => 'Авторы'
+            'authorBooks' => 'Авторы',
+            'imageFile' => 'Изображение'
         ];
     }
 
@@ -66,6 +73,17 @@ class Book extends \yii\db\ActiveRecord
         return $this->hasMany(Subscriber::class, ['book_id' => 'id']);
     }
 
+    /**
+     * @throws HttpException
+     */
+    public function beforeSave($insert): bool
+    {
+        if (!FileServices::upload($this)) {
+            throw new HttpException(500, 'Невозможно загрузить файл');
+        };
+        return parent::beforeSave($insert);
+    }
+
     public function afterSave($insert, $changedAttributes)
     {
         if ($this->authorBooks){
@@ -79,4 +97,5 @@ class Book extends \yii\db\ActiveRecord
         };
         parent::afterSave($insert, $changedAttributes);
     }
+
 }

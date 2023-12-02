@@ -1,5 +1,6 @@
 <?php
 
+use backend\FileServices;
 use yii\helpers\Html;
 use yii\widgets\DetailView;
 
@@ -38,5 +39,9 @@ $this->params['breadcrumbs'][] = $this->title;
             'count',
         ],
     ]) ?>
+
+    <?php if($model->photo): ?>
+        <img src="<?= FileServices::getDataURI($model->photo)?>" alt="<?=$model->name ?>" width="500" >
+    <?php endif; ?>
 
 </div>

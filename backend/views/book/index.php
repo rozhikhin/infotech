@@ -44,7 +44,7 @@ $this->params['breadcrumbs'][] = $this->title;
                     if ($model->count) {
                         return '';
                     } else {
-                        return Html::a('Сообщить о поступлении', 'book/subscribe', ['class' => 'btn btn-success btn-xs'
+                        return Html::a('Сообщить о поступлении', '/subscribe', ['class' => 'btn btn-success btn-xs'
                             . (false ? '' : 'd-none')]);
                     }
 
