@@ -2,10 +2,14 @@
 
 namespace frontend\controllers;
 
+use backend\models\Book;
+use backend\models\Subscriber;
 use frontend\models\ResendVerificationEmailForm;
 use frontend\models\VerifyEmailForm;
 use Yii;
 use yii\base\InvalidArgumentException;
+use yii\data\ActiveDataProvider;
+use yii\data\SqlDataProvider;
 use yii\web\BadRequestHttpException;
 use yii\web\Controller;
 use yii\filters\VerbFilter;
@@ -14,7 +18,8 @@ use common\models\LoginForm;
 use frontend\models\PasswordResetRequestForm;
 use frontend\models\ResetPasswordForm;
 use frontend\models\SignupForm;
-use frontend\models\ContactForm;
+use yii\web\ForbiddenHttpException;
+use yii\web\NotFoundHttpException;
 
 /**
  * Site controller
@@ -29,7 +34,7 @@ class SiteController extends Controller
         return [
             'access' => [
                 'class' => AccessControl::class,
-                'only' => ['logout', 'signup'],
+                'only' => ['logout', 'signup', 'index'],
                 'rules' => [
                     [
                         'actions' => ['signup'],
@@ -37,7 +42,7 @@ class SiteController extends Controller
                         'roles' => ['?'],
                     ],
                     [
-                        'actions' => ['logout'],
+                        'actions' => ['logout', 'index'],
                         'allow' => true,
                         'roles' => ['@'],
                     ],
@@ -47,6 +52,7 @@ class SiteController extends Controller
                 'class' => VerbFilter::class,
                 'actions' => [
                     'logout' => ['post'],
+                    'index' => ['get'],
                 ],
             ],
         ];
@@ -72,11 +78,103 @@ class SiteController extends Controller
      * Displays homepage.
      *
      * @return mixed
+     * @throws ForbiddenHttpException
      */
     public function actionIndex()
     {
-        return $this->render('index');
+        if (!\Yii::$app->user->can('listBooks')) {
+            throw new ForbiddenHttpException('Доступ запрещен');
+        }
+        $dataProvider = new ActiveDataProvider([
+            'query' => Book::find(),
+            'pagination' => [
+                'pageSize' => 50
+            ],
+            'sort' => [
+                'defaultOrder' => [
+                    'id' => SORT_DESC,
+                ]
+            ],
+        ]);
+
+        return $this->render('index', [
+            'dataProvider' => $dataProvider,
+        ]);
     }
+
+    /**
+     * @throws NotFoundHttpException
+     */
+    public function actionView($id): string
+    {
+        if (!\Yii::$app->user->can('viewBook')) {
+            throw new ForbiddenHttpException('Доступ запрещен');
+        }
+        return $this->render('view', [
+            'model' => $this->findModel($id),
+        ]);
+    }
+
+    public function actionSubscribe(int $id)
+    {
+        if (!\Yii::$app->user->can('subscribeBook')) {
+            throw new ForbiddenHttpException('Доступ запрещен');
+        }
+
+        if(\Yii::$app->request->isAjax){
+            $subscribeModel = new Subscriber();
+            $subscribeModel->user_id = Yii::$app->user->getId();
+            $subscribeModel->book_id = $id;
+            if ($subscribeModel->save()) {
+                return true;
+            } else {
+                return false;
+            }
+        }
+    }
+
+    public function actionReport(int $year = 0): string
+    {
+        if (!\Yii::$app->user->can('viewReport')) {
+            throw new ForbiddenHttpException('Доступ запрещен');
+        }
+
+        if (Yii::$app->request->post('year')) {
+            $year = Yii::$app->request->post('year');
+        }
+        $sql = 'select a.fio, count(ab.book_id) as book_count
+            from author a
+            inner join author_book ab on a.id = ab.author_id
+            inner join book b on ab.book_id = b.id
+            where b.year = :year
+            group by a.fio
+            order by book_count
+            limit 10
+        ';
+        $dataProvider = new SqlDataProvider([
+            'sql' => $sql,
+            'params' => [':year' => $year],
+            'pagination' => false,
+        ]);
+
+        return $this->render('report', [
+            'dataProvider' => $dataProvider,
+            'year' => $year
+        ]);
+    }
+
+    /**
+     * @throws NotFoundHttpException
+     */
+    protected function findModel($id): ?Book
+    {
+        if (($model = Book::findOne(['id' => $id])) !== null) {
+            return $model;
+        }
+
+        throw new NotFoundHttpException('The requested page does not exist.');
+    }
+
 
     /**
      * Logs in a user.
@@ -111,39 +209,6 @@ class SiteController extends Controller
         Yii::$app->user->logout();
 
         return $this->goHome();
-    }
-
-    /**
-     * Displays contact page.
-     *
-     * @return mixed
-     */
-    public function actionContact()
-    {
-        $model = new ContactForm();
-        if ($model->load(Yii::$app->request->post()) && $model->validate()) {
-            if ($model->sendEmail(Yii::$app->params['adminEmail'])) {
-                Yii::$app->session->setFlash('success', 'Thank you for contacting us. We will respond to you as soon as possible.');
-            } else {
-                Yii::$app->session->setFlash('error', 'There was an error sending your message.');
-            }
-
-            return $this->refresh();
-        }
-
-        return $this->render('contact', [
-            'model' => $model,
-        ]);
-    }
-
-    /**
-     * Displays about page.
-     *
-     * @return mixed
-     */
-    public function actionAbout()
-    {
-        return $this->render('about');
     }
 
     /**

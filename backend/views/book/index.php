@@ -9,7 +9,7 @@ use yii\grid\GridView;
 /** @var yii\web\View $this */
 /** @var yii\data\ActiveDataProvider $dataProvider */
 
-$this->title = 'Books';
+$this->title = 'Книги';
 $this->params['breadcrumbs'][] = $this->title;
 ?>
 <div class="book-index">
@@ -17,7 +17,7 @@ $this->params['breadcrumbs'][] = $this->title;
     <h1><?= Html::encode($this->title) ?></h1>
 
     <p>
-        <?= Html::a('Create Book', ['create'], ['class' => 'btn btn-success']) ?>
+        <?= Html::a('Новая книга', ['create'], ['class' => 'btn btn-success']) ?>
     </p>
 
 
@@ -37,18 +37,6 @@ $this->params['breadcrumbs'][] = $this->title;
                 'urlCreator' => function ($action, Book $model, $key, $index, $column) {
                     return Url::toRoute([$action, 'id' => $model->id]);
                  }
-            ],
-            [
-                'header' => 'Button',
-                'content' => function($model) {
-                    if ($model->count) {
-                        return '';
-                    } else {
-                        return Html::a('Сообщить о поступлении', '/subscribe', ['class' => 'btn btn-success btn-xs'
-                            . (false ? '' : 'd-none')]);
-                    }
-
-                }
             ],
         ],
     ]); ?>

@@ -5,12 +5,12 @@ namespace backend\controllers;
 use backend\models\Book;
 use yii\data\ActiveDataProvider;
 use yii\db\StaleObjectException;
+use yii\filters\AccessControl;
 use yii\web\Controller;
-use yii\web\HttpException;
+use yii\web\ForbiddenHttpException;
 use yii\web\NotFoundHttpException;
 use yii\filters\VerbFilter;
 use yii\web\Response;
-use yii\web\UploadedFile;
 
 class BookController extends Controller
 {
@@ -19,6 +19,15 @@ class BookController extends Controller
         return array_merge(
             parent::behaviors(),
             [
+                'access' => [
+                    'class' => AccessControl::class,
+                    'rules' => [
+                        [
+                            'allow' => true,
+                            'roles' => ['@'],
+                        ],
+                    ],
+                ],
                 'verbs' => [
                     'class' => VerbFilter::class,
                     'actions' => [
@@ -29,8 +38,14 @@ class BookController extends Controller
         );
     }
 
+    /**
+     * @throws ForbiddenHttpException
+     */
     public function actionIndex(): string
     {
+        if (!\Yii::$app->user->can('listBooks')) {
+            throw new ForbiddenHttpException('Доступ запрещен');
+        }
         $dataProvider = new ActiveDataProvider([
             'query' => Book::find(),
 
@@ -55,6 +70,9 @@ class BookController extends Controller
      */
     public function actionView(int $id): string
     {
+        if (!\Yii::$app->user->can('viewBook')) {
+            throw new ForbiddenHttpException('Доступ запрещен');
+        }
         return $this->render('view', [
             'model' => $this->findModel($id),
         ]);
@@ -65,6 +83,9 @@ class BookController extends Controller
      */
     public function actionCreate()
     {
+        if (!\Yii::$app->user->can('createBook')) {
+            throw new ForbiddenHttpException('Доступ запрещен');
+        }
         $model = new Book();
 
         if ($this->request->isPost) {
@@ -87,6 +108,9 @@ class BookController extends Controller
      */
     public function actionUpdate(int $id)
     {
+        if (!\Yii::$app->user->can('updateBook')) {
+            throw new ForbiddenHttpException('Доступ запрещен');
+        }
         $model = $this->findModel($id);
 
         if ($this->request->isPost && $model->load($this->request->post()) && $model->save()) {
@@ -106,6 +130,9 @@ class BookController extends Controller
      */
     public function actionDelete(int $id): Response
     {
+        if (!\Yii::$app->user->can('deleteBook')) {
+            throw new ForbiddenHttpException('Доступ запрещен');
+        }
         $this->findModel($id)->delete();
 
         return $this->redirect(['index']);

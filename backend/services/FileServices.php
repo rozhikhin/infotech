@@ -1,17 +1,18 @@
 <?php
 
-namespace backend;
+namespace backend\services;
 
-use finfo;
 use yii\web\UploadedFile;
 
 class FileServices
 {
     public static function getDataURI($imagePath) {
         $path = \Yii::getAlias('@frontend') . '/web' . $imagePath;
-        $finfo = new finfo(FILEINFO_MIME_TYPE);
-        $type = $finfo->file($path);
-        return 'data:' . $type . ';base64,' . base64_encode(file_get_contents($path));
+        if (file_exists($path)) {
+            $finfo = new \finfo(FILEINFO_MIME_TYPE);
+            $type = $finfo->file($path);
+            return 'data:' . $type . ';base64,' . base64_encode(file_get_contents($path));
+        }
     }
 
     public static function upload($model): bool

@@ -2,11 +2,10 @@
 
 namespace backend\models;
 
-use backend\FileServices;
+use backend\services\FileServices;
+use backend\services\SubscribeServices;
 use yii\db\ActiveQuery;
-use yii\helpers\ArrayHelper;
 use yii\web\HttpException;
-use yii\web\UploadedFile;
 
 /**
  *
@@ -95,6 +94,7 @@ class Book extends \yii\db\ActiveRecord
                 $authorLink->save();
             }
         };
+        SubscribeServices::sendSMSToSubbscribers($this);
         parent::afterSave($insert, $changedAttributes);
     }
 

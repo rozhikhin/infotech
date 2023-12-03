@@ -5,7 +5,7 @@ use yii\helpers\Html;
 use yii\widgets\DetailView;
 
 /** @var yii\web\View $this */
-/** @var backend\models\Book $model */
+/** @var frontend\models\Book $model */
 
 $this->title = $model->name;
 $this->params['breadcrumbs'][] = ['label' => 'Книги', 'url' => ['index']];
@@ -17,16 +17,7 @@ $this->params['breadcrumbs'][] = $this->title;
     <h1><?= Html::encode($this->title) ?></h1>
 
     <p>
-        <?= Html::a('Изменить', ['update', 'id' => $model->id], ['class' => 'btn btn-primary']) ?>
-        <?= Html::a('Удалить', ['delete', 'id' => $model->id], [
-            'class' => 'btn btn-danger',
-            'data' => [
-                'confirm' => 'Вы уверены, что хотите удалить эту книгу?',
-                'method' => 'post',
-            ],
-        ]) ?>
-    </p>
-
+        <?= Html::a('На главную', ['index', 'id' => $model->id], ['class' => 'btn btn-primary']) ?>
     <?= DetailView::widget([
         'model' => $model,
         'attributes' => [
@@ -34,7 +25,6 @@ $this->params['breadcrumbs'][] = $this->title;
             'year',
             'description:ntext',
             'isbn',
-            'photo',
             'count',
         ],
     ]) ?>
@@ -42,5 +32,4 @@ $this->params['breadcrumbs'][] = $this->title;
     <?php if($model->photo): ?>
         <img src="<?= FileServices::getDataURI($model->photo)?>" alt="<?=$model->name ?>" width="500" >
     <?php endif; ?>
-
 </div>
