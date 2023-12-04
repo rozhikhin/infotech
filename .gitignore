@@ -42,4 +42,5 @@ phpunit.phar
 /backend/web/index-test.php
 /backend/web/robots.txt
 /docker/mysql/
-/frontend/web/uploads
+/frontend/web/uploads/*
+!/frontend/web/uploads/.gitkeep
