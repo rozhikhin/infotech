@@ -30,7 +30,7 @@ class Author extends ActiveRecord
     {
         return [
             'id' => 'ID',
-            'fio' => 'Fio',
+            'fio' => 'ФИО',
         ];
     }
 
